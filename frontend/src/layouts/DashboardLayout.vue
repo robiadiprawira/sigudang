@@ -1,31 +1,58 @@
 <script setup lang="ts">
+import { ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import {
   Pill,
   LayoutDashboard,
-  Package,
-  Layers,
-  ArrowDownLeft,
-  ArrowUpRight,
+  ArrowLeftRight,
+  Database,
   Users,
   LogOut,
   Search,
   Bell,
   AlertTriangle,
+  ChevronDown,
 } from "@lucide/vue";
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
-const mainMenu = [
-  { name: "Dashboard", path: "/", icon: LayoutDashboard },
-  { name: "Master Obat", path: "/obat", icon: Package },
-  { name: "Stok & Batch", path: "/batch", icon: Layers },
-  { name: "Barang Masuk", path: "/masuk", icon: ArrowDownLeft },
-  { name: "Barang Keluar", path: "/keluar", icon: ArrowUpRight },
+// State untuk mengontrol buka/tutup dropdown menu
+const openMenus = ref<{ [key: string]: boolean }>({
+  transaksi: true,
+  masterData: false,
+});
+
+const toggleMenu = (key: string) => {
+  openMenus.value[key] = !openMenus.value[key];
+};
+
+// Definisi Submenu
+const transaksiChildren = [
+  { name: "Stock", path: "/transaksi/stock" },
+  { name: "Barang Masuk", path: "/transaksi/masuk" },
+  { name: "Barang Keluar", path: "/transaksi/keluar" },
+  { name: "Retur Barang", path: "/transaksi/retur" },
 ];
+
+const masterDataChildren = [
+  { name: "Data Obat", path: "/master/obat" },
+  { name: "Kategori & Satuan", path: "/master/kategori-satuan" },
+  { name: "Data Supplier", path: "/master/supplier" },
+  { name: "Data Pelanggan", path: "/master/pelanggan" },
+];
+
+// Otomatis buka parent menu jika user mengakses URL child-nya langsung
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath.startsWith("/transaksi")) openMenus.value.transaksi = true;
+    if (newPath.startsWith("/master")) openMenus.value.masterData = true;
+  },
+  { immediate: true },
+);
 
 const handleLogout = () => {
   authStore.logout();
@@ -37,7 +64,7 @@ const handleLogout = () => {
   <div class="min-h-screen bg-[#F8FAFC] flex text-slate-800">
     <!-- SIDEBAR -->
     <aside
-      class="w-64 bg-white border-r border-slate-200/80 flex flex-col justify-between shrink-0"
+      class="w-64 bg-white border-r border-slate-200/80 flex flex-col justify-between shrink-0 overflow-y-auto"
     >
       <div>
         <!-- Logo -->
@@ -56,6 +83,7 @@ const handleLogout = () => {
 
         <!-- Menu Groups -->
         <div class="p-4 space-y-6">
+          <!-- MAIN MENU -->
           <div>
             <p
               class="px-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase mb-2"
@@ -63,23 +91,65 @@ const handleLogout = () => {
               Main Menu
             </p>
             <nav class="space-y-1">
+              <!-- Dashboard -->
               <router-link
-                v-for="item in mainMenu"
-                :key="item.path"
-                :to="item.path"
+                to="/"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition"
                 :class="
-                  route.path === item.path
+                  route.path === '/'
                     ? 'bg-blue-50 text-blue-600'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 "
               >
-                <component :is="item.icon" class="w-4 h-4" />
-                <span>{{ item.name }}</span>
+                <LayoutDashboard class="w-4 h-4" />
+                <span>Dashboard</span>
               </router-link>
+
+              <!-- Transaksi (Dropdown) -->
+              <div>
+                <button
+                  @click="toggleMenu('transaksi')"
+                  class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition cursor-pointer"
+                  :class="
+                    route.path.startsWith('/transaksi')
+                      ? 'text-blue-600 bg-blue-50/50'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  "
+                >
+                  <div class="flex items-center gap-3">
+                    <ArrowLeftRight class="w-4 h-4" />
+                    <span>Transaksi</span>
+                  </div>
+                  <ChevronDown
+                    class="w-4 h-4 text-slate-400 transition-transform duration-200"
+                    :class="{ 'rotate-180 text-blue-600': openMenus.transaksi }"
+                  />
+                </button>
+
+                <!-- Child Transaksi -->
+                <div
+                  v-show="openMenus.transaksi"
+                  class="mt-1 ml-4 pl-3 border-l border-slate-200 space-y-1"
+                >
+                  <router-link
+                    v-for="child in transaksiChildren"
+                    :key="child.path"
+                    :to="child.path"
+                    class="block px-3 py-2 rounded-lg text-xs font-medium transition"
+                    :class="
+                      route.path === child.path
+                        ? 'bg-blue-50 text-blue-600 font-semibold'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                    "
+                  >
+                    {{ child.name }}
+                  </router-link>
+                </div>
+              </div>
             </nav>
           </div>
 
+          <!-- OTHER -->
           <div>
             <p
               class="px-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase mb-2"
@@ -87,6 +157,51 @@ const handleLogout = () => {
               Other
             </p>
             <nav class="space-y-1">
+              <!-- Master Data (Dropdown) -->
+              <div>
+                <button
+                  @click="toggleMenu('masterData')"
+                  class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition cursor-pointer"
+                  :class="
+                    route.path.startsWith('/master')
+                      ? 'text-blue-600 bg-blue-50/50'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  "
+                >
+                  <div class="flex items-center gap-3">
+                    <Database class="w-4 h-4" />
+                    <span>Master Data</span>
+                  </div>
+                  <ChevronDown
+                    class="w-4 h-4 text-slate-400 transition-transform duration-200"
+                    :class="{
+                      'rotate-180 text-blue-600': openMenus.masterData,
+                    }"
+                  />
+                </button>
+
+                <!-- Child Master Data -->
+                <div
+                  v-show="openMenus.masterData"
+                  class="mt-1 ml-4 pl-3 border-l border-slate-200 space-y-1"
+                >
+                  <router-link
+                    v-for="child in masterDataChildren"
+                    :key="child.path"
+                    :to="child.path"
+                    class="block px-3 py-2 rounded-lg text-xs font-medium transition"
+                    :class="
+                      route.path === child.path
+                        ? 'bg-blue-50 text-blue-600 font-semibold'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                    "
+                  >
+                    {{ child.name }}
+                  </router-link>
+                </div>
+              </div>
+
+              <!-- Manajemen User -->
               <router-link
                 v-if="authStore.user?.role === 'superadmin'"
                 to="/users"
@@ -98,9 +213,10 @@ const handleLogout = () => {
                 "
               >
                 <Users class="w-4 h-4" />
-                <span>Kelola Petugas</span>
+                <span>Manajemen User</span>
               </router-link>
 
+              <!-- Sign Out -->
               <button
                 @click="handleLogout"
                 class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition cursor-pointer"
@@ -113,7 +229,7 @@ const handleLogout = () => {
         </div>
       </div>
 
-      <!-- Bottom Card & User Profile (Sesuai Referensi) -->
+      <!-- Bottom Card & User Profile -->
       <div class="p-4 space-y-4">
         <div class="bg-slate-50 border border-slate-200/70 rounded-2xl p-4">
           <div class="flex items-center gap-2 text-amber-600 mb-1">
@@ -124,10 +240,10 @@ const handleLogout = () => {
             Cek batch obat yang mendekati tanggal kedaluwarsa secara berkala.
           </p>
           <router-link
-            to="/batch"
+            to="/transaksi/stock"
             class="block text-center w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-xl transition"
           >
-            Cek Batch Obat
+            Cek Stock & Batch
           </router-link>
         </div>
 
@@ -173,7 +289,22 @@ const handleLogout = () => {
           <button
             class="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition"
           >
-            <Bell class="w-4 h-4" />
+            <router-link
+              to="/notifikasi"
+              class="relative w-9 h-9 rounded-xl border flex items-center justify-center transition"
+              :class="
+                route.path === '/notifikasi'
+                  ? 'bg-blue-50 border-blue-200 text-blue-600'
+                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+              "
+              title="Notifikasi"
+            >
+              <Bell class="w-4 h-4" />
+              <!-- Titik indikator notifikasi belum dibaca -->
+              <span
+                class="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white"
+              ></span>
+            </router-link>
           </button>
         </div>
       </header>
