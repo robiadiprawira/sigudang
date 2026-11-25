@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
 import hashlib
+from typing import Optional, Literal
 
 import models
 from database import engine, SessionLocal
@@ -35,6 +36,55 @@ def hash_password(password: str) -> str:
 def seed_initial_data():
     db = SessionLocal()
     try:
+        if not db.query(models.Pelanggan).first():
+            default_pelanggan = [
+                models.Pelanggan(
+                    kode_pelanggan="PLG-001",
+                    nama_pelanggan="Amy Siti Kusdiyanti",
+                    tipe="BPJS",
+                    telepon="Ext. 101",
+                    alamat="Lantai 1 Gedung Utama"
+                ),
+                models.Pelanggan(
+                    kode_pelanggan="PLG-002",
+                    nama_pelanggan="Wulan Anggraeni",
+                    tipe="Umum",
+                    telepon="Ext. 102",
+                    alamat="Lantai 1 Sayap Kanan"
+                ),
+                models.Pelanggan(
+                    kode_pelanggan="PLG-003",
+                    nama_pelanggan="Elia Siti Fatonah",
+                    tipe="BPJS",
+                    telepon="Ext. 103",
+                    alamat="Lantai 1 Sayap Kiri"
+                ),
+            ]
+            db.add_all(default_pelanggan)
+    
+        if not db.query(models.Supplier).first():
+            default_supplier = [
+                models.Supplier(
+                    kode_supplier="SUP-001",
+                    nama_supplier="PT Kimia Farma Trading & Distribution",
+                    telepon="021-3847709",
+                    alamat="Jl. Budi Utomo No. 1, Jakarta Pusat"
+                ),
+                models.Supplier(
+                    kode_supplier="SUP-002",
+                    nama_supplier="PT Enseval Putera Megatrading Tbk",
+                    telepon="021-46822422",
+                    alamat="Jl. Pulo Lentut No. 10, Kawasan Industri Pulogadung"
+                ),
+                models.Supplier(
+                    kode_supplier="SUP-003",
+                    nama_supplier="PT Anugrah Argon Medica",
+                    telepon="021-7454222",
+                    alamat="Titan Center Lt. 3, Bintaro Jaya"
+                ),
+            ]
+            db.add_all(default_supplier)
+    
         if not db.query(models.Kategori).first():
             default_kategori = [
                 models.Kategori(nama_kategori="Obat Bebas"),
@@ -201,3 +251,198 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             "role": user.role
         }
     }
+
+class ObatRequest(BaseModel):
+    kode_obat: str
+    nama_obat: str
+    kategori: str
+    satuan: str
+    stok_minimal: int = 10
+
+@app.post("/api/obat")
+def create_obat(data: ObatRequest, db: Session = Depends(get_db)):
+    kode = data.kode_obat.strip().upper()
+    nama = data.nama_obat.strip()
+    if not kode or not nama:
+        raise HTTPException(status_code=400, detail="Kode dan nama obat wajib diisi")
+    
+    existing = db.query(models.Obat).filter(models.Obat.kode_obat == kode).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Kode obat '{kode}' sudah terdaftar")
+    
+    obat_baru = models.Obat(
+        kode_obat=kode,
+        nama_obat=nama,
+        kategori=data.kategori,
+        satuan=data.satuan,
+        stok=0,
+        stok_minimal=data.stok_minimal
+    )
+    db.add(obat_baru)
+    db.commit()
+    db.refresh(obat_baru)
+    return obat_baru
+
+@app.put("/api/obat/{obat_id}")
+def update_obat(obat_id: int, data: ObatRequest, db: Session = Depends(get_db)):
+    obat = db.query(models.Obat).filter(models.Obat.id == obat_id).first()
+    if not obat:
+        raise HTTPException(status_code=404, detail="Data obat tidak ditemukan")
+    
+    kode = data.kode_obat.strip().upper()
+    # Cek duplikasi kode jika kode diubah
+    if kode != obat.kode_obat:
+        cek_kode = db.query(models.Obat).filter(models.Obat.kode_obat == kode).first()
+        if cek_kode:
+            raise HTTPException(status_code=400, detail=f"Kode obat '{kode}' sudah dipakai obat lain")
+    
+    obat.kode_obat = kode
+    obat.nama_obat = data.nama_obat.strip()
+    obat.kategori = data.kategori
+    obat.satuan = data.satuan
+    obat.stok_minimal = data.stok_minimal
+    
+    db.commit()
+    db.refresh(obat)
+    return obat
+
+@app.delete("/api/obat/{obat_id}")
+def delete_obat(obat_id: int, db: Session = Depends(get_db)):
+    obat = db.query(models.Obat).filter(models.Obat.id == obat_id).first()
+    if not obat:
+        raise HTTPException(status_code=404, detail="Data obat tidak ditemukan")
+    db.delete(obat)
+    db.commit()
+    return {"status": "ok"}
+
+class SupplierRequest(BaseModel):
+    kode_supplier: str
+    nama_supplier: str
+    telepon: Optional[str] = ""
+    alamat: Optional[str] = ""
+
+@app.get("/api/supplier")
+def get_all_supplier(db: Session = Depends(get_db)):
+    return db.query(models.Supplier).order_by(models.Supplier.id.asc()).all()
+
+@app.post("/api/supplier")
+def create_supplier(data: SupplierRequest, db: Session = Depends(get_db)):
+    kode = data.kode_supplier.strip().upper()
+    nama = data.nama_supplier.strip()
+    if not kode or not nama:
+        raise HTTPException(status_code=400, detail="Kode dan nama supplier wajib diisi")
+    
+    existing = db.query(models.Supplier).filter(models.Supplier.kode_supplier == kode).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Kode supplier '{kode}' sudah terdaftar")
+    
+    supplier_baru = models.Supplier(
+        kode_supplier=kode,
+        nama_supplier=nama,
+        telepon=data.telepon.strip() if data.telepon else "",
+        alamat=data.alamat.strip() if data.alamat else "",
+    )
+    db.add(supplier_baru)
+    db.commit()
+    db.refresh(supplier_baru)
+    return supplier_baru
+
+@app.put("/api/supplier/{supplier_id}")
+def update_supplier(supplier_id: int, data: SupplierRequest, db: Session = Depends(get_db)):
+    supplier = db.query(models.Supplier).filter(models.Supplier.id == supplier_id).first()
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Data supplier tidak ditemukan")
+    
+    kode = data.kode_supplier.strip().upper()
+    if kode != supplier.kode_supplier:
+        cek_kode = db.query(models.Supplier).filter(models.Supplier.kode_supplier == kode).first()
+        if cek_kode:
+            raise HTTPException(status_code=400, detail=f"Kode supplier '{kode}' sudah dipakai")
+    
+    supplier.kode_supplier = kode
+    supplier.nama_supplier = data.nama_supplier.strip()
+    supplier.telepon = data.telepon.strip() if data.telepon else ""
+    supplier.alamat = data.alamat.strip() if data.alamat else ""
+    
+    db.commit()
+    db.refresh(supplier)
+    return supplier
+
+@app.delete("/api/supplier/{supplier_id}")
+def delete_supplier(supplier_id: int, db: Session = Depends(get_db)):
+    supplier = db.query(models.Supplier).filter(models.Supplier.id == supplier_id).first()
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Data supplier tidak ditemukan")
+    db.delete(supplier)
+    db.commit()
+    return {"status": "ok"}
+
+class PelangganRequest(BaseModel):
+    kode_pelanggan: str
+    nama_pelanggan: str
+    tipe: Literal["Umum", "BPJS"] = "Umum"
+    telepon: Optional[str] = ""
+    alamat: Optional[str] = ""
+
+PelangganRequest.model_rebuild()
+
+@app.get("/api/pelanggan")
+def get_all_pelanggan(db: Session = Depends(get_db)):
+    return db.query(models.Pelanggan).order_by(models.Pelanggan.id.asc()).all()
+
+@app.post("/api/pelanggan")
+def create_pelanggan(data: PelangganRequest, db: Session = Depends(get_db)):
+    kode = data.kode_pelanggan.strip().upper()
+    nama = data.nama_pelanggan.strip()
+    if not kode or not nama:
+        raise HTTPException(status_code=400, detail="Kode dan nama pelanggan wajib diisi")
+    
+    existing = db.query(models.Pelanggan).filter(models.Pelanggan.kode_pelanggan == kode).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Kode pelanggan '{kode}' sudah terdaftar")
+    
+    pelanggan_baru = models.Pelanggan(
+        kode_pelanggan=kode,
+        nama_pelanggan=nama,
+        tipe=data.tipe.strip() if data.tipe else "Poli / Internal",
+        telepon=data.telepon.strip() if data.telepon else "",
+        alamat=data.alamat.strip() if data.alamat else "",
+    )
+    db.add(pelanggan_baru)
+    db.commit()
+    db.refresh(pelanggan_baru)
+    return pelanggan_baru
+
+@app.put("/api/pelanggan/{pelanggan_id}")
+def update_pelanggan(pelanggan_id: int, data: PelangganRequest, db: Session = Depends(get_db)):
+    pelanggan = db.query(models.Pelanggan).filter(models.Pelanggan.id == pelanggan_id).first()
+    if not pelanggan:
+        raise HTTPException(status_code=404, detail="Data pelanggan tidak ditemukan")
+
+    kode = data.kode_pelanggan.strip().upper()
+    if kode != pelanggan.kode_pelanggan:
+        cek_kode = db.query(models.Pelanggan).filter(models.Pelanggan.kode_pelanggan == kode).first()
+        if cek_kode:
+            raise HTTPException(status_code=400, detail=f"Kode pelanggan '{kode}' sudah dipakai")
+
+    pelanggan.kode_pelanggan = kode
+    pelanggan.nama_pelanggan = data.nama_pelanggan.strip()
+    pelanggan.tipe = data.tipe
+    pelanggan.telepon = (data.telepon or "").strip()
+    pelanggan.alamat = (data.alamat or "").strip()
+
+    db.commit()
+    db.refresh(pelanggan)
+    return pelanggan
+
+@app.delete("/api/pelanggan/{pelanggan_id}")
+def delete_pelanggan(pelanggan_id: int, db: Session = Depends(get_db)):
+    pelanggan = db.query(models.Pelanggan).filter(models.Pelanggan.id == pelanggan_id).first()
+    if not pelanggan:
+        raise HTTPException(status_code=404, detail="Data pelanggan tidak ditemukan")
+    db.delete(pelanggan)
+    db.commit()
+    return {"status": "ok"}
+
+    
+

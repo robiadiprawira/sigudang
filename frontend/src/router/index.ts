@@ -7,6 +7,9 @@ import ComingSoonView from "@/views/ComingSoonView.vue";
 import NotificationView from "@/views/NotificationView.vue";
 import StockView from "@/views/StockView.vue";
 import KategoriSatuanView from "@/views/KategoriSatuanView.vue";
+import MasterObatView from "@/views/MasterObatView.vue";
+import SupplierView from "@/views/SupplierView.vue";
+import PelangganView from "@/views/PelangganView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -47,8 +50,7 @@ const router = createRouter({
         {
           path: "master/obat",
           name: "master-obat",
-          component: ComingSoonView,
-          meta: { title: "Master Data Obat" },
+          component: MasterObatView,
         },
         {
           path: "master/kategori-satuan",
@@ -58,14 +60,12 @@ const router = createRouter({
         {
           path: "master/supplier",
           name: "master-supplier",
-          component: ComingSoonView,
-          meta: { title: "Master Data Supplier" },
+          component: SupplierView,
         },
         {
           path: "master/pelanggan",
           name: "master-pelanggan",
-          component: ComingSoonView,
-          meta: { title: "Master Data Pelanggan" },
+          component: PelangganView,
         },
         // Manajemen User
         {

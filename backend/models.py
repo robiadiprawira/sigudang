@@ -95,3 +95,22 @@ class DetailKeluar(Base):
     subtotal = Column(Float, nullable=False)
 
     transaksi = relationship("TransaksiKeluar", back_populates="details")
+
+class Supplier(Base):
+    __tablename__ = "supplier"
+
+    id = Column(Integer, primary_key=True, index=True)
+    kode_supplier = Column(String, unique=True, index=True, nullable=False)
+    nama_supplier = Column(String, nullable=False)
+    telepon = Column(String, nullable=True)
+    alamat = Column(String, nullable=True)
+
+class Pelanggan(Base):
+    __tablename__ = "pelanggan"
+
+    id = Column(Integer, primary_key=True, index=True)
+    kode_pelanggan = Column(String, unique=True, index=True, nullable=False)
+    nama_pelanggan = Column(String, nullable=False)
+    tipe = Column(String, default="Umum")
+    telepon = Column(String, nullable=True)
+    alamat = Column(String, nullable=True)
