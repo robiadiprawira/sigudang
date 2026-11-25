@@ -105,12 +105,13 @@ class Supplier(Base):
     telepon = Column(String, nullable=True)
     alamat = Column(String, nullable=True)
 
-class Pelanggan(Base):
-    __tablename__ = "pelanggan"
+class Pasien(Base):
+    __tablename__ = "pasien"
 
     id = Column(Integer, primary_key=True, index=True)
-    kode_pelanggan = Column(String, unique=True, index=True, nullable=False)
-    nama_pelanggan = Column(String, nullable=False)
+    kode_pasien = Column(String, unique=True, index=True, nullable=False)
+    nama_pasien = Column(String, nullable=False)
+    no_rekam_medis = Column(String, unique=True, index=True, nullable=False)
     tipe = Column(String, default="Umum")
     telepon = Column(String, nullable=True)
     alamat = Column(String, nullable=True)

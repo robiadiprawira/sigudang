@@ -36,31 +36,34 @@ def hash_password(password: str) -> str:
 def seed_initial_data():
     db = SessionLocal()
     try:
-        if not db.query(models.Pelanggan).first():
-            default_pelanggan = [
-                models.Pelanggan(
-                    kode_pelanggan="PLG-001",
-                    nama_pelanggan="Amy Siti Kusdiyanti",
+        if not db.query(models.Pasien).first():
+            default_pasien = [
+                models.Pasien(
+                    kode_pasien="PSN-001",
+                    no_rekam_medis="RM-2026-0001",
+                    nama_pasien="Budi Santoso",
                     tipe="BPJS",
-                    telepon="Ext. 101",
-                    alamat="Lantai 1 Gedung Utama"
+                    telepon="0812-3456-7890",
+                    alamat="Jl. Merdeka No. 12"
                 ),
-                models.Pelanggan(
-                    kode_pelanggan="PLG-002",
-                    nama_pelanggan="Wulan Anggraeni",
+                models.Pasien(
+                    kode_pasien="PSN-002",
+                    no_rekam_medis="RM-2026-0002",
+                    nama_pasien="Siti Aminah",
                     tipe="Umum",
-                    telepon="Ext. 102",
-                    alamat="Lantai 1 Sayap Kanan"
+                    telepon="0857-1122-3344",
+                    alamat="Komp. Griya Asri Blok B4"
                 ),
-                models.Pelanggan(
-                    kode_pelanggan="PLG-003",
-                    nama_pelanggan="Elia Siti Fatonah",
+                models.Pasien(
+                    kode_pasien="PSN-003",
+                    no_rekam_medis="RM-2026-0003",
+                    nama_pasien="Ahmad Fauzi",
                     tipe="BPJS",
-                    telepon="Ext. 103",
-                    alamat="Lantai 1 Sayap Kiri"
+                    telepon="0813-9988-7766",
+                    alamat="Jl. Sudirman No. 88"
                 ),
-            ]
-            db.add_all(default_pelanggan)
+        ]
+        db.add_all(default_pasien)
     
         if not db.query(models.Supplier).first():
             default_supplier = [
@@ -377,70 +380,82 @@ def delete_supplier(supplier_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "ok"}
 
-class PelangganRequest(BaseModel):
-    kode_pelanggan: str
-    nama_pelanggan: str
+class PasienRequest(BaseModel):
+    kode_pasien: str
+    no_rekam_medis: str
+    nama_pasien: str
     tipe: Literal["Umum", "BPJS"] = "Umum"
     telepon: Optional[str] = ""
     alamat: Optional[str] = ""
 
-PelangganRequest.model_rebuild()
+PasienRequest.model_rebuild()
 
-@app.get("/api/pelanggan")
-def get_all_pelanggan(db: Session = Depends(get_db)):
-    return db.query(models.Pelanggan).order_by(models.Pelanggan.id.asc()).all()
+@app.get("/api/pasien")
+def get_all_pasien(db: Session = Depends(get_db)):
+    return db.query(models.Pasien).order_by(models.Pasien.id.asc()).all()
 
-@app.post("/api/pelanggan")
-def create_pelanggan(data: PelangganRequest, db: Session = Depends(get_db)):
-    kode = data.kode_pelanggan.strip().upper()
-    nama = data.nama_pelanggan.strip()
-    if not kode or not nama:
-        raise HTTPException(status_code=400, detail="Kode dan nama pelanggan wajib diisi")
-    
-    existing = db.query(models.Pelanggan).filter(models.Pelanggan.kode_pelanggan == kode).first()
-    if existing:
-        raise HTTPException(status_code=400, detail=f"Kode pelanggan '{kode}' sudah terdaftar")
-    
-    pelanggan_baru = models.Pelanggan(
-        kode_pelanggan=kode,
-        nama_pelanggan=nama,
-        tipe=data.tipe.strip() if data.tipe else "Poli / Internal",
-        telepon=data.telepon.strip() if data.telepon else "",
-        alamat=data.alamat.strip() if data.alamat else "",
+@app.post("/api/pasien")
+def create_pasien(data: PasienRequest, db: Session = Depends(get_db)):
+    kode = data.kode_pasien.strip().upper()
+    no_rm = data.no_rekam_medis.strip().upper()
+    nama = data.nama_pasien.strip()
+
+    if not kode or not no_rm or not nama:
+        raise HTTPException(status_code=400, detail="Kode pasien, No. Rekam Medis, dan nama pasien wajib diisi")
+
+    if db.query(models.Pasien).filter(models.Pasien.kode_pasien == kode).first():
+        raise HTTPException(status_code=400, detail=f"Kode pasien '{kode}' sudah terdaftar")
+
+    if db.query(models.Pasien).filter(models.Pasien.no_rekam_medis == no_rm).first():
+        raise HTTPException(status_code=400, detail=f"No. Rekam Medis '{no_rm}' sudah digunakan pasien lain")
+
+    pasien_baru = models.Pasien(
+        kode_pasien=kode,
+        no_rekam_medis=no_rm,
+        nama_pasien=nama,
+        tipe=data.tipe,
+        telepon=(data.telepon or "").strip(),
+        alamat=(data.alamat or "").strip(),
     )
-    db.add(pelanggan_baru)
+    db.add(pasien_baru)
     db.commit()
-    db.refresh(pelanggan_baru)
-    return pelanggan_baru
+    db.refresh(pasien_baru)
+    return pasien_baru
 
-@app.put("/api/pelanggan/{pelanggan_id}")
-def update_pelanggan(pelanggan_id: int, data: PelangganRequest, db: Session = Depends(get_db)):
-    pelanggan = db.query(models.Pelanggan).filter(models.Pelanggan.id == pelanggan_id).first()
-    if not pelanggan:
-        raise HTTPException(status_code=404, detail="Data pelanggan tidak ditemukan")
+@app.put("/api/pasien/{pasien_id}")
+def update_pasien(pasien_id: int, data: PasienRequest, db: Session = Depends(get_db)):
+    pasien = db.query(models.Pasien).filter(models.Pasien.id == pasien_id).first()
+    if not pasien:
+        raise HTTPException(status_code=404, detail="Data pasien tidak ditemukan")
 
-    kode = data.kode_pelanggan.strip().upper()
-    if kode != pelanggan.kode_pelanggan:
-        cek_kode = db.query(models.Pelanggan).filter(models.Pelanggan.kode_pelanggan == kode).first()
-        if cek_kode:
-            raise HTTPException(status_code=400, detail=f"Kode pelanggan '{kode}' sudah dipakai")
+    kode = data.kode_pasien.strip().upper()
+    no_rm = data.no_rekam_medis.strip().upper()
 
-    pelanggan.kode_pelanggan = kode
-    pelanggan.nama_pelanggan = data.nama_pelanggan.strip()
-    pelanggan.tipe = data.tipe
-    pelanggan.telepon = (data.telepon or "").strip()
-    pelanggan.alamat = (data.alamat or "").strip()
+    if kode != pasien.kode_pasien:
+        if db.query(models.Pasien).filter(models.Pasien.kode_pasien == kode).first():
+            raise HTTPException(status_code=400, detail=f"Kode pasien '{kode}' sudah dipakai")
+
+    if no_rm != pasien.no_rekam_medis:
+        if db.query(models.Pasien).filter(models.Pasien.no_rekam_medis == no_rm).first():
+            raise HTTPException(status_code=400, detail=f"No. Rekam Medis '{no_rm}' sudah dipakai pasien lain")
+
+    pasien.kode_pasien = kode
+    pasien.no_rekam_medis = no_rm
+    pasien.nama_pasien = data.nama_pasien.strip()
+    pasien.tipe = data.tipe
+    pasien.telepon = (data.telepon or "").strip()
+    pasien.alamat = (data.alamat or "").strip()
 
     db.commit()
-    db.refresh(pelanggan)
-    return pelanggan
+    db.refresh(pasien)
+    return pasien
 
-@app.delete("/api/pelanggan/{pelanggan_id}")
-def delete_pelanggan(pelanggan_id: int, db: Session = Depends(get_db)):
-    pelanggan = db.query(models.Pelanggan).filter(models.Pelanggan.id == pelanggan_id).first()
-    if not pelanggan:
-        raise HTTPException(status_code=404, detail="Data pelanggan tidak ditemukan")
-    db.delete(pelanggan)
+@app.delete("/api/pasien/{pasien_id}")
+def delete_pasien(pasien_id: int, db: Session = Depends(get_db)):
+    pasien = db.query(models.Pasien).filter(models.Pasien.id == pasien_id).first()
+    if not pasien:
+        raise HTTPException(status_code=404, detail="Data pasien tidak ditemukan")
+    db.delete(pasien)
     db.commit()
     return {"status": "ok"}
 
