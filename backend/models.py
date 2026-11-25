@@ -37,6 +37,18 @@ class ObatBatch(Base):
 
     obat = relationship("Obat", back_populates="batches")
 
+class Kategori(Base):
+    __tablename__ = "kategori"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nama_kategori = Column(String, unique=True, nullable=False)
+
+class Satuan(Base):
+    __tablename__ = "satuan"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nama_satuan = Column(String, unique=True, nullable=False)
+
 class TransaksiMasuk(Base):
     __tablename__ = "transaksi_masuk"
 

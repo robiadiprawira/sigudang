@@ -6,6 +6,7 @@ import DashboardView from "@/views/DashboardView.vue";
 import ComingSoonView from "@/views/ComingSoonView.vue";
 import NotificationView from "@/views/NotificationView.vue";
 import StockView from "@/views/StockView.vue";
+import KategoriSatuanView from "@/views/KategoriSatuanView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -52,8 +53,7 @@ const router = createRouter({
         {
           path: "master/kategori-satuan",
           name: "kategori-satuan",
-          component: ComingSoonView,
-          meta: { title: "Master Kategori & Satuan" },
+          component: KategoriSatuanView,
         },
         {
           path: "master/supplier",
