@@ -1,17 +1,13 @@
 <script setup lang="ts">
-import {
-  Package,
-  AlertTriangle,
-  ArrowDownLeft,
-  ArrowUpRight,
-} from "@lucide/vue";
+import { Package, AlertTriangle, ArrowDownLeft } from "@lucide/vue";
+import StatCard from "@/components/StatCard.vue";
 </script>
 
 <template>
   <div class="space-y-6">
     <!-- Top Bento Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- Featured Royal Blue Card (Seperti Kartu Utama di Referensi) -->
+      <!-- Featured Royal Blue Card -->
       <div
         class="lg:col-span-4 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-between"
       >
@@ -37,56 +33,29 @@ import {
         </div>
       </div>
 
-      <!-- 3 Metric Cards -->
+      <!-- 3 Metric Cards menggunakan StatCard -->
       <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div
-          class="bg-white rounded-2xl border border-slate-200/80 p-6 flex flex-col justify-between"
-        >
-          <div
-            class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4"
-          >
-            <Package class="w-5 h-5" />
-          </div>
-          <div>
-            <p class="text-xs font-medium text-slate-400">Total Item Obat</p>
-            <p class="text-2xl font-bold text-slate-900 mt-1">
-              0 <span class="text-xs font-normal text-slate-400">jenis</span>
-            </p>
-          </div>
-        </div>
-
-        <div
-          class="bg-white rounded-2xl border border-slate-200/80 p-6 flex flex-col justify-between"
-        >
-          <div
-            class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4"
-          >
-            <AlertTriangle class="w-5 h-5" />
-          </div>
-          <div>
-            <p class="text-xs font-medium text-slate-400">Mendekati Expired</p>
-            <p class="text-2xl font-bold text-slate-900 mt-1">
-              0 <span class="text-xs font-normal text-slate-400">batch</span>
-            </p>
-          </div>
-        </div>
-
-        <div
-          class="bg-white rounded-2xl border border-slate-200/80 p-6 flex flex-col justify-between"
-        >
-          <div
-            class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4"
-          >
-            <ArrowDownLeft class="w-5 h-5" />
-          </div>
-          <div>
-            <p class="text-xs font-medium text-slate-400">Transaksi Hari Ini</p>
-            <p class="text-2xl font-bold text-slate-900 mt-1">
-              0
-              <span class="text-xs font-normal text-slate-400">aktivitas</span>
-            </p>
-          </div>
-        </div>
+        <StatCard
+          label="Total Item Obat"
+          :value="0"
+          unit="jenis"
+          :icon="Package"
+          color="blue"
+        />
+        <StatCard
+          label="Mendekati Expired"
+          :value="0"
+          unit="batch"
+          :icon="AlertTriangle"
+          color="amber"
+        />
+        <StatCard
+          label="Transaksi Hari Ini"
+          :value="0"
+          unit="aktivitas"
+          :icon="ArrowDownLeft"
+          color="emerald"
+        />
       </div>
     </div>
 
@@ -105,7 +74,7 @@ import {
       </div>
       <div class="flex items-center gap-3">
         <router-link
-          to="/obat"
+          to="/master/obat"
           class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition"
         >
           + Tambah Master Obat

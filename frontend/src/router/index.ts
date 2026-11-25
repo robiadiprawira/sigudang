@@ -5,6 +5,7 @@ import DashboardLayout from "@/layouts/DashboardLayout.vue";
 import DashboardView from "@/views/DashboardView.vue";
 import ComingSoonView from "@/views/ComingSoonView.vue";
 import NotificationView from "@/views/NotificationView.vue";
+import StockView from "@/views/StockView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,12 +23,7 @@ const router = createRouter({
         { path: "", name: "dashboard", component: DashboardView },
         { path: "notifikasi", name: "notifikasi", component: NotificationView },
         // Transaksi
-        {
-          path: "transaksi/stock",
-          name: "stock-obat",
-          component: ComingSoonView,
-          meta: { title: "Monitoring Stock & Batch" },
-        },
+        { path: "transaksi/stock", name: "stock-obat", component: StockView },
         {
           path: "transaksi/masuk",
           name: "barang-masuk",

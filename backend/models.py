@@ -19,10 +19,10 @@ class Obat(Base):
     id = Column(Integer, primary_key=True, index=True)
     kode_obat = Column(String, unique=True, index=True, nullable=False)
     nama_obat = Column(String, index=True, nullable=False)
-    satuan = Column(String, nullable=False)  # Box, Strip, Botol, Tablet
-    harga_jual = Column(Float, default=0)
+    kategori = Column(String, nullable=False)      # Contoh: Obat Bebas, Keras, Sirup, Alkes
+    satuan = Column(String, nullable=False)        # Contoh: Strip / Lembar, Botol, Box, Tube, Tablet
+    stok = Column(Integer, default=0)              # Jumlah stok terkini sesuai satuan
     stok_minimal = Column(Integer, default=10)
-    total_stok = Column(Integer, default=0)  # Otomatis update dari transaksi
 
     batches = relationship("ObatBatch", back_populates="obat")
 
